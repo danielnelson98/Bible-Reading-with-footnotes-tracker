@@ -5,6 +5,57 @@
   <title>Bible Reading Tracker – OT & NT</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+/* --- PORTRAIT MODE: show tabs, hide side-by-side --- */
+@media (orientation: portrait) {
+  .container {
+    display: block;
+  }
+
+  .column {
+    display: none; /* hide both by default */
+  }
+
+  .column.active {
+    display: block; /* show only the active one */
+  }
+
+  /* Tab buttons */
+  .tab-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 12px 0;
+  }
+
+  .tab-buttons button {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: none;
+    background: #3949ab;
+    color: white;
+    font-size: 0.9rem;
+  }
+
+  .tab-buttons button.active {
+    background: #1a237e;
+  }
+}
+
+/* --- LANDSCAPE MODE: normal side-by-side layout --- */
+@media (orientation: landscape) {
+  .tab-buttons {
+    display: none; /* hide tabs */
+  }
+
+  .container {
+    display: flex; /* side-by-side */
+  }
+
+  .column {
+    display: block;
+  }
+}
+
     :root { color-scheme: light dark; }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -77,7 +128,13 @@
     <button data-jump="104">104</button>
   </div>
 
+<div class="tab-buttons">
+  <button id="tab-ot" class="active">Old Testament</button>
+  <button id="tab-nt">New Testament</button>
+</div>
+
   <div class="container">
+
     <div class="column">
       <h2>Old Testament</h2>
       <div class="weeks" id="ot-weeks"></div>
@@ -1231,6 +1288,50 @@
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
+
+// --- TAB SWITCHING FOR PORTRAIT ---
+const otCol = document.querySelectorAll('.column')[0];
+const ntCol = document.querySelectorAll('.column')[1];
+const tabOT = document.getElementById('tab-ot');
+const tabNT = document.getElementById('tab-nt');
+
+function showOT() {
+  otCol.classList.add('active');
+  ntCol.classList.remove('active');
+  tabOT.classList.add('active');
+  tabNT.classList.remove('active');
+}
+
+function showNT() {
+  ntCol.classList.add('active');
+  otCol.classList.remove('active');
+  tabNT.classList.add('active');
+  tabOT.classList.remove('active');
+}
+
+tabOT.addEventListener('click', showOT);
+tabNT.addEventListener('click', showNT);
+
+// --- SWIPE SUPPORT ---
+let startX = 0;
+
+document.addEventListener('touchstart', e => {
+  startX = e.touches[0].clientX;
+});
+
+document.addEventListener('touchend', e => {
+  const endX = e.changedTouches[0].clientX;
+  const diff = endX - startX;
+
+  if (Math.abs(diff) < 50) return; // ignore tiny swipes
+
+  if (diff < 0) showNT(); // swipe left → NT
+  else showOT();          // swipe right → OT
+});
+
+// Default: show OT in portrait
+showOT();
+
   </script>
 </body>
 </html>
