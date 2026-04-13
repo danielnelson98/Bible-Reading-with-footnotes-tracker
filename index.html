@@ -2355,12 +2355,18 @@ setTimeout(() => {
 
 
     document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const week = parseInt(btn.getAttribute('data-jump'), 10);
-        const target = document.getElementById(`ot-week-${week}`);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    });
+  btn.addEventListener('click', () => {
+    const week = parseInt(btn.getAttribute('data-jump'), 10);
+
+    const otVisible = window.getComputedStyle(document.getElementById("ot-weeks")).display !== "none";
+    const ntVisible = window.getComputedStyle(document.getElementById("nt-weeks")).display !== "none";
+
+    const targetId = ntVisible ? `nt-week-${week}` : `ot-week-${week}`;
+    const target = document.getElementById(targetId);
+
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+});
 
 // --- TAB SWITCHING FOR PORTRAIT ---
 const otCol = document.querySelectorAll('.column')[0];
@@ -2409,13 +2415,12 @@ showOT();
 const jumpTodayBtn = document.getElementById("jump-today");
 
 function scrollToCurrentWeek() {
-  const isNT = document.getElementById("nt-weeks").style.display !== "none";
+  const otVisible = window.getComputedStyle(document.getElementById("ot-weeks")).display !== "none";
+  const ntVisible = window.getComputedStyle(document.getElementById("nt-weeks")).display !== "none";
 
-  const targetId = isNT
-    ? `nt-week-${currentWeek}`
-    : `ot-week-${currentWeek}`;
-
+  const targetId = ntVisible ? `nt-week-${currentWeek}` : `ot-week-${currentWeek}`;
   const el = document.getElementById(targetId);
+
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
