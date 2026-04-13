@@ -2328,7 +2328,9 @@ function getCurrentWeekNumber() {
     createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
     createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
 
-const currentWeek = getCurrentWeekNumber();
+const OVERRIDE_WEEK = 11;  // set to null to disable
+
+const currentWeek = OVERRIDE_WEEK ?? getCurrentWeekNumber();
 
 // highlight OT + NT current week
 ["ot", "nt"].forEach(prefix => {
@@ -2407,20 +2409,27 @@ showOT();
 const jumpTodayBtn = document.getElementById("jump-today");
 
 function scrollToCurrentWeek() {
-  const el = document.getElementById(`ot-week-${currentWeek}`);
+  const isNT = document.getElementById("nt-weeks").style.display !== "none";
+
+  const targetId = isNT
+    ? `nt-week-${currentWeek}`
+    : `ot-week-${currentWeek}`;
+
+  const el = document.getElementById(targetId);
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 jumpTodayBtn.addEventListener("click", scrollToCurrentWeek);
 
 // Show button only when user scrolls away
-window.addEventListener("scroll", () => {
-  if (window.scrollY > 80) {
+document.addEventListener("scroll", () => {
+  if (document.documentElement.scrollTop > 40) {
     jumpTodayBtn.style.display = "block";
   } else {
     jumpTodayBtn.style.display = "none";
   }
 });
+
 
   </script>
 </body>
