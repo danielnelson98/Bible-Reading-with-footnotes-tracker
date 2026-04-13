@@ -2353,13 +2353,15 @@ setTimeout(() => {
 }, 50);
 
 
-
-    document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
+document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
   btn.addEventListener('click', () => {
     const week = parseInt(btn.getAttribute('data-jump'), 10);
 
-    const otVisible = window.getComputedStyle(document.getElementById("ot-weeks")).display !== "none";
-    const ntVisible = window.getComputedStyle(document.getElementById("nt-weeks")).display !== "none";
+    const otPanel = document.getElementById("ot-panel");
+    const ntPanel = document.getElementById("nt-panel");
+
+    const otVisible = window.getComputedStyle(otPanel).display !== "none";
+    const ntVisible = window.getComputedStyle(ntPanel).display !== "none";
 
     const targetId = ntVisible ? `nt-week-${week}` : `ot-week-${week}`;
     const target = document.getElementById(targetId);
@@ -2415,8 +2417,11 @@ showOT();
 const jumpTodayBtn = document.getElementById("jump-today");
 
 function scrollToCurrentWeek() {
-  const otVisible = window.getComputedStyle(document.getElementById("ot-weeks")).display !== "none";
-  const ntVisible = window.getComputedStyle(document.getElementById("nt-weeks")).display !== "none";
+  const otPanel = document.getElementById("ot-panel");
+  const ntPanel = document.getElementById("nt-panel");
+
+  const otVisible = window.getComputedStyle(otPanel).display !== "none";
+  const ntVisible = window.getComputedStyle(ntPanel).display !== "none";
 
   const targetId = ntVisible ? `nt-week-${currentWeek}` : `ot-week-${currentWeek}`;
   const el = document.getElementById(targetId);
