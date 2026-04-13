@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bible Reading Tracker – OT & NT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0; padding: 0;
+      background: #f5f5f5; color: #222;
+    }
+    header {
+      padding: 16px; background: #283593; color: #fff; text-align: center;
+    }
+    header h1 { margin: 0; font-size: 1.4rem; }
+    .nav {
+      padding: 8px 12px; background: #e8eaf6;
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+      font-size: 0.85rem;
+    }
+    .nav button {
+      border: none; padding: 6px 10px; border-radius: 999px;
+      background: #3949ab; color: #fff; cursor: pointer; font-size: 0.8rem;
+    }
+    .nav button:hover { background: #303f9f; }
+    .container {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      padding: 12px; box-sizing: border-box;
+    }
+    .column { flex: 1 1 320px; min-width: 0; }
+    .column h2 { margin: 4px 0 8px; font-size: 1.1rem; text-align: center; }
+    .weeks {
+      max-height: calc(100vh - 150px);
+      overflow-y: auto; padding-right: 4px;
+    }
+    .week {
+      background: #ffffff; margin-bottom: 10px; border-radius: 8px;
+      padding: 10px 10px 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .week-header {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 6px; gap: 6px;
+    }
+    .week-title { font-weight: 600; font-size: 0.95rem; }
+    .week-dates { font-size: 0.8rem; color: #555; text-align: right; }
+    .day {
+      display: flex; align-items: center; font-size: 0.85rem; margin: 2px 0;
+    }
+    .day input[type="checkbox"] { width: 16px; height: 16px; }
+    .day label { margin-left: 6px; }
+    footer {
+      text-align: center; font-size: 0.75rem; color: #777;
+      padding: 8px 0 10px;
+    }
+    @media (max-width: 700px) { .weeks { max-height: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Bible Reading Tracker</h1>
+  </header>
+
+  <div class="nav">
+    <span>Jump to week:</span>
+    <button data-jump="1">1</button>
+    <button data-jump="10">10</button>
+    <button data-jump="20">20</button>
+    <button data-jump="30">30</button>
+    <button data-jump="40">40</button>
+    <button data-jump="50">50</button>
+    <button data-jump="60">60</button>
+    <button data-jump="70">70</button>
+    <button data-jump="80">80</button>
+    <button data-jump="90">90</button>
+    <button data-jump="104">104</button>
+  </div>
+
+  <div class="container">
+    <div class="column">
+      <h2>Old Testament</h2>
+      <div class="weeks" id="ot-weeks"></div>
+    </div>
+    <div class="column">
+      <h2>New Testament</h2>
+      <div class="weeks" id="nt-weeks"></div>
+    </div>
+  </div>
+
+  <footer>
+    Weeks start from Week 1: 4 Jan 2026 (Lord's Day) – 10 Jan 2026 (Saturday)
+  </footer>
+
+  <script>
+    const NUM_WEEKS = 104;
+    const START_DATE = new Date(2026, 0, 4); // 4 Jan 2026 (Lord's Day)
+    const dayNames = ["Lord's Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    // === THIS IS WHERE THE READING SCHEDULE LIVES ===
+    const otRefs = {
+      //  // --- OT WEEKS 1–26 ---
+
+1: [
+  "Gen 1:1-5",
+  "Gen 1:6-23",
+  "Gen 1:24-31",
+  "Gen 2:1-9",
+  "Gen 2:10-25",
+  "Gen 3:1-13",
+  "Gen 3:14-24"
+],
+
+2: [
+  "Gen 4:1-26",
+  "Gen 5:1-32",
+  "Gen 6:1-22",
+  "Gen 7:1-8:30",
+  "Gen 8:4-22",
+  "Gen 9:1-29",
+  "Gen 10:1-32"
+],
+
+3: [
+  "Gen 11:1-32",
+  "Gen 12:1-20",
+  "Gen 13:1-18",
+  "Gen 14:1-24",
+  "Gen 15:1-21",
+  "Gen 16:1-16",
+  "Gen 17:1-27"
+],
+
+4: [
+  "Gen 18:1-33",
+  "Gen 19:1-38",
+  "Gen 20:1-18",
+  "Gen 21:1-34",
+  "Gen 22:1-24",
+  "Gen 23:1-24:27",
+  "Gen 24:28-67"
+],
+
+5: [
+  "Gen 25:1-34",
+  "Gen 26:1-35",
+  "Gen 27:1-46",
+  "Gen 28:1-22",
+  "Gen 29:1-35",
+  "Gen 30:1-43",
+  "Gen 31:1-55"
+],
+
+6: [
+  "Gen 32:1-32",
+  "Gen 33:1-34:31",
+  "Gen 35:1-29",
+  "Gen 36:1-43",
+  "Gen 37:1-36",
+  "Gen 38:1-39:23",
+  "Gen 40:1-41:13"
+],
+
+7: [
+  "Gen 41:14-57",
+  "Gen 48:1-22",
+  "Gen 42:1-38",
+  "Gen 43:1-34",
+  "Gen 44:1-34",
+  "Gen 45:1-28",
+  "Gen 46:1-34"
+],
+
+8: [
+  "Gen 47:1-31",
+  "Gen 49:1-15",
+  "Gen 49:16-33",
+  "Gen 50:1-26",
+  "Exo 1:1-22",
+  "Exo 2:1-25",
+  "Exo 3:1-22"
+],
+
+9: [
+  "Exo 4:1-31",
+  "Exo 5:1-23",
+  "Exo 6:1-30",
+  "Exo 7:1-25",
+  "Exo 8:1-32",
+  "Exo 9:1-35",
+  "Exo 10:1-29"
+],
+
+10: [
+  "Exo 11:1-10",
+  "Exo 12:1-14",
+  "Exo 12:15-36",
+  "Exo 12:37-51",
+  "Exo 13:1-22",
+  "Exo 14:1-31",
+  "Exo 15:1-27"
+],
+
+11: [
+  "Exo 16:1-36",
+  "Exo 17:1-16",
+  "Exo 18:1-27",
+  "Exo 19:1-25",
+  "Exo 20:1-26",
+  "Exo 21:1-36",
+  "Exo 22:1-31"
+],
+
+12: [
+  "Exo 23:1-33",
+  "Exo 24:1-18",
+  "Exo 25:1-22",
+  "Exo 25:23-40",
+  "Exo 26:1-14",
+  "Exo 26:15-37",
+  "Exo 27:1-21"
+],
+
+13: [
+  "Exo 28:1-21",
+  "Exo 28:22-43",
+  "Exo 29:1-21",
+  "Exo 29:22-46",
+  "Exo 30:1-10",
+  "Exo 30:11-38",
+  "Exo 31:1-17"
+],
+
+14: [
+  "Exo 31:18-32:35",
+  "Exo 33:1-23",
+  "Exo 34:1-35",
+  "Exo 35:1-35",
+  "Exo 36:1-38",
+  "Exo 37:1-29",
+  "Exo 38:1-31"
+],
+
+15: [
+  "Exo 39:1-43",
+  "Exo 40:1-38",
+  "Lev 1:1-17",
+  "Lev 2:1-16",
+  "Lev 3:1-17",
+  "Lev 4:1-35",
+  "Lev 5:1-19"
+],
+
+16: [
+  "Lev 6:1-30",
+  "Lev 7:1-38",
+  "Lev 8:1-36",
+  "Lev 9:1-24",
+  "Lev 10:1-20",
+  "Lev 11:1-47",
+  "Lev 12:1-8"
+],
+
+17: [
+  "Lev 13:1-28",
+  "Lev 13:29-59",
+  "Lev 14:1-18",
+  "Lev 14:19-32",
+  "Lev 14:33-57",
+  "Lev 15:1-33",
+  "Lev 16:1-17"
+],
+
+18: [
+  "Lev 16:18-34",
+  "Lev 17:1-16",
+  "Lev 18:1-30",
+  "Lev 19:1-37",
+  "Lev 20:1-27",
+  "Lev 21:1-24",
+  "Lev 22:1-33"
+],
+
+19: [
+  "Lev 23:1-22",
+  "Lev 23:23-44",
+  "Lev 24:1-23",
+  "Lev 25:1-23",
+  "Lev 25:24-55",
+  "Lev 26:1-24",
+  "Lev 26:25-46"
+],
+
+20: [
+  "Lev 27:1-34",
+  "Num 1:1-54",
+  "Num 2:1-34",
+  "Num 3:1-51",
+  "Num 4:1-49",
+  "Num 5:1-31",
+  "Num 6:1-27"
+],
+
+21: [
+  "Num 7:1-41",
+  "Num 7:42-88",
+  "Num 7:89-8:26",
+  "Num 9:1-23",
+  "Num 10:1-36",
+  "Num 11:1-35",
+  "Num 12:1-13:33"
+],
+
+22: [
+  "Num 14:1-45",
+  "Num 15:1-41",
+  "Num 16:1-50",
+  "Num 17:1-18:7",
+  "Num 18:8-32",
+  "Num 19:1-22",
+  "Num 20:1-29"
+],
+
+23: [
+  "Num 21:1-35",
+  "Num 22:1-41",
+  "Num 23:1-30",
+  "Num 24:1-25",
+  "Num 25:1-18",
+  "Num 26:1-65",
+  "Num 27:1-23"
+],
+
+24: [
+  "Num 28:1-31",
+  "Num 29:1-40",
+  "Num 30:1-31:24",
+  "Num 31:25-54",
+  "Num 32:1-42",
+  "Num 33:1-56",
+  "Num 34:1-29"
+],
+
+25: [
+  "Num 35:1-34",
+  "Num 36:1-13",
+  "Deut 1:1-46",
+  "Deut 2:1-37",
+  "Deut 3:1-29",
+  "Deut 4:1-49",
+  "Deut 5:1-33"
+],
+
+26: [
+  "Deut 6:1-7:26",
+  "Deut 8:1-20",
+  "Deut 9:1-29",
+  "Deut 10:1-22",
+  "Deut 11:1-32",
+  "Deut 12:1-32",
+  "Deut 13:1-14:21"
+],
+
+27: [
+  "Deut 14:22-15:23",
+  "Deut 16:1-22",
+  "Deut 17:1-18:8",
+  "Deut 18:9-19:21",
+  "Deut 20:1-21:17",
+  "Deut 21:18-22:30",
+  "Deut 23:1-15"
+],
+
+28: [
+  "Deut 24:1-22",
+  "Deut 25:1-19",
+  "Deut 26:1-19",
+  "Deut 27:1-26",
+  "Deut 28:1-68",
+  "Deut 29:1-29",
+  "Deut 30:1-31:29"
+],
+
+29: [
+  "Deut 31:30-32:52",
+  "Deut 33:1-29",
+  "Deut 34:1-12",
+  "Josh 1:1-18",
+  "Josh 2:1-24",
+  "Josh 3:1-17",
+  "Josh 4:1-24"
+],
+
+30: [
+  "Josh 5:1-15",
+  "Josh 6:1-27",
+  "Josh 7:1-26",
+  "Josh 8:1-35",
+  "Josh 9:1-27",
+  "Josh 10:1-43",
+  "Josh 11:1-12:24"
+],
+
+31: [
+  "Josh 13:1-33",
+  "Josh 14:1-15:63",
+  "Josh 16:1-18:28",
+  "Josh 19:1-51",
+  "Josh 20:1-21:45",
+  "Josh 22:1-34",
+  "Josh 23:1-24:33"
+],
+
+32: [
+  "Judg 1:1-36",
+  "Judg 2:1-23",
+  "Judg 3:1-31",
+  "Judg 4:1-24",
+  "Judg 5:1-31",
+  "Judg 6:1-40",
+  "Judg 7:1-25"
+],
+
+33: [
+  "Judg 8:1-35",
+  "Judg 9:1-57",
+  "Judg 10:1-11:40",
+  "Judg 12:1-13:25",
+  "Judg 14:1-15:20",
+  "Judg 16:1-31",
+  "Judg 17:1-18:31"
+],
+
+34: [
+  "Judg 19:1-30",
+  "Judg 20:1-48",
+  "Judg 21:1-25",
+  "Ruth 1:1-22",
+  "Ruth 2:1-23",
+  "Ruth 3:1-18",
+  "Ruth 4:1-22"
+],
+
+35: [
+  "1 Sam 1:1-28",
+  "1 Sam 2:1-36",
+  "1 Sam 3:1-4:22",
+  "1 Sam 5:1-6:22",
+  "1 Sam 7:1-8:22",
+  "1 Sam 9:1-27",
+  "1 Sam 10:1-11:15"
+],
+
+36: [
+  "1 Sam 12:1-13:23",
+  "1 Sam 14:1-52",
+  "1 Sam 15:1-35",
+  "1 Sam 16:1-23",
+  "1 Sam 17:1-58",
+  "1 Sam 18:1-30",
+  "1 Sam 19:1-24"
+],
+
+37: [
+  "1 Sam 20:1-42",
+  "1 Sam 21:1-22:23",
+  "1 Sam 23:1-24:22",
+  "1 Sam 25:1-44",
+  "1 Sam 26:1-25",
+  "1 Sam 27:1-28:25",
+  "1 Sam 29:1-30:31"
+],
+
+38: [
+  "1 Sam 31:1-13",
+  "2 Sam 1:1-27",
+  "2 Sam 2:1-32",
+  "2 Sam 3:1-39",
+  "2 Sam 4:1-5:25",
+  "2 Sam 6:1-23",
+  "2 Sam 7:1-29"
+],
+
+39: [
+  "2 Sam 8:1-9:13",
+  "2 Sam 10:1-11:27",
+  "2 Sam 12:1-31",
+  "2 Sam 13:1-39",
+  "2 Sam 14:1-33",
+  "2 Sam 15:1-16:23",
+  "2 Sam 17:1-18:33"
+],
+
+40: [
+  "2 Sam 19:1-43",
+  "2 Sam 20:1-21:22",
+  "2 Sam 22:1-51",
+  "2 Sam 23:1-39",
+  "2 Sam 24:1-25",
+  "1 Kings 1:1-19",
+  "1 Kings 1:20-53"
+],
+
+41: [
+  "1 Kings 2:1-46",
+  "1 Kings 3:1-28",
+  "1 Kings 4:1-34",
+  "1 Kings 5:1-6:38",
+  "1 Kings 7:1-22",
+  "1 Kings 7:23-51",
+  "1 Kings 8:1-36"
+],
+
+42: [
+  "1 Kings 8:37-66",
+  "1 Kings 9:1-28",
+  "1 Kings 10:1-29",
+  "1 Kings 11:1-43",
+  "1 Kings 12:1-33",
+  "1 Kings 13:1-34",
+  "1 Kings 14:1-31"
+],
+
+43: [
+  "1 Kings 15:1-34",
+  "1 Kings 16:1-17:24",
+  "1 Kings 18:1-46",
+  "1 Kings 19:1-21",
+  "1 Kings 20:1-43",
+  "1 Kings 21:1-22:53",
+  "2 Kings 1:1-18"
+],
+
+44: [
+  "2 Kings 2:1-3:27",
+  "2 Kings 4:1-44",
+  "2 Kings 5:1-6:33",
+  "2 Kings 7:1-20",
+  "2 Kings 8:1-29",
+  "2 Kings 9:1-37",
+  "2 Kings 10:1-36"
+],
+
+45: [
+  "2 Kings 11:1-12:21",
+  "2 Kings 13:1-14:29",
+  "2 Kings 15:1-38",
+  "2 Kings 16:1-20",
+  "2 Kings 17:1-41",
+  "2 Kings 18:1-37",
+  "2 Kings 19:1-37"
+],
+
+46: [
+  "2 Kings 20:1-21:26",
+  "2 Kings 22:1-20",
+  "2 Kings 23:1-37",
+  "2 Kings 24:1-25:30",
+  "1 Chron 1:1-54",
+  "1 Chron 2:1-3:24",
+  "1 Chron 4:1-5:26"
+],
+
+47: [
+  "1 Chron 6:1-81",
+  "1 Chron 7:1-40",
+  "1 Chron 8:1-40",
+  "1 Chron 9:1-44",
+  "1 Chron 10:1-11:47",
+  "1 Chron 12:1-40",
+  "1 Chron 13:1-14:17"
+],
+
+48: [
+  "1 Chron 15:1-16:43",
+  "1 Chron 17:1-27",
+  "1 Chron 18:1-19:19",
+  "1 Chron 20:1-21:30",
+  "1 Chron 22:1-23:32",
+  "1 Chron 24:1-25:31",
+  "1 Chron 26:1-32"
+],
+
+49: [
+  "1 Chron 27:1-34",
+  "1 Chron 28:1-29:30",
+  "2 Chron 1:1-17",
+  "2 Chron 2:1-3:17",
+  "2 Chron 4:1-5:14",
+  "2 Chron 6:1-42",
+  "2 Chron 7:1-8:18"
+],
+
+50: [
+  "2 Chron 9:1-10:19",
+  "2 Chron 11:1-12:16",
+  "2 Chron 13:1-15:19",
+  "2 Chron 16:1-17:19",
+  "2 Chron 18:1-19:11",
+  "2 Chron 20:1-37",
+  "2 Chron 21:1-22:12"
+],
+
+51: [
+  "2 Chron 23:1-24:27",
+  "2 Chron 25:1-26:23",
+  "2 Chron 27:1-28:27",
+  "2 Chron 29:1-36",
+  "2 Chron 30:1-31:21",
+  "2 Chron 32:1-33",
+  "2 Chron 33:1-34:33"
+],
+
+52: [
+  "2 Chron 35:1-36:23",
+  "Ezra 1:1-11",
+  "Ezra 2:1-70",
+  "Ezra 3:1-4:24",
+  "Ezra 5:1-6:22",
+  "Ezra 7:1-28",
+  "Ezra 8:1-36"
+],
+
+53: [
+  "Ezra 9:1-20",
+  "Neh 1:1-11",
+  "Neh 2:1-3:32",
+  "Neh 4:1-5:19",
+  "Neh 6:1-19",
+  "Neh 7:1-73",
+  "Neh 8:1-18"
+],
+
+54: [
+  "Neh 9:1-20",
+  "Neh 9:21-38",
+  "Neh 10:1-11:36",
+  "Neh 12:1-47",
+  "Neh 13:1-31",
+  "Esth 1:1-22",
+  "Esth 2:1-3:15"
+],
+
+55: [
+  "Esth 4:1-5:14",
+  "Esth 6:1-7:21",
+  "Esth 8:1-17",
+  "Esth 9:1-10:3",
+  "Job 1:1-22",
+  "Job 2:1-3:26",
+  "Job 4:1-5:27"
+],
+
+56: [
+  "Job 6:1-7:21",
+  "Job 8:1-9:35",
+  "Job 10:1-11:20",
+  "Job 12:1-13:28",
+  "Job 14:1-15:35",
+  "Job 16:1-17:16",
+  "Job 18:1-19:29"
+],
+
+57: [
+  "Job 20:1-21:34",
+  "Job 22:1-23:17",
+  "Job 24:1-25:6",
+  "Job 26:1-27:23",
+  "Job 28:1-29:25",
+  "Job 30:1-31:40",
+  "Job 32:1-33:33"
+],
+
+58: [
+  "Job 34:1-35:16",
+  "Job 36:1-33",
+  "Job 37:1-24",
+  "Job 38:1-41",
+  "Job 39:1-30",
+  "Job 40:1-24",
+  "Job 41:1-34"
+],
+
+59: [
+  "Job 42:1-17",
+  "Psa 1:1-60",
+  "Psa 2:1-3:8",
+  "Psa 4:1-6:10",
+  "Psa 7:1-8:9",
+  "Psa 9:1-10:18",
+  "Psa 11:1-15:5"
+],
+
+60: [
+  "Psa 16:1-17:15",
+  "Psa 18:1-19:29",
+  "Psa 19:1-21:13",
+  "Psa 22:1-31",
+  "Psa 23:1-24:10",
+  "Psa 25:1-27:14",
+  "Psa 28:1-30:12"
+],
+
+61: [
+  "Psa 31:1-32:11",
+  "Psa 33:1-34:22",
+  "Psa 35:1-36:12",
+  "Psa 37:1-40",
+  "Psa 38:1-39:13",
+  "Psa 40:1-41:13",
+  "Psa 42:1-43:5"
+],
+
+62: [
+  "Psa 44:1-26",
+  "Psa 45:1-17",
+  "Psa 46:1-48:14",
+  "Psa 49:1-50:23",
+  "Psa 51:1-52:9",
+  "Psa 53:1-55:23",
+  "Psa 56:1-58:11"
+],
+
+63: [
+  "Psa 59:1-61:8",
+  "Psa 62:1-64:10",
+  "Psa 65:1-67:7",
+  "Psa 68:1-35",
+  "Psa 69:1-70:5",
+  "Psa 71:1-72:20",
+  "Psa 73:1-74:23"
+],
+
+64: [
+  "Psa 75:1-77:20",
+  "Psa 78:1-72",
+  "Psa 79:1-81:16",
+  "Psa 82:1-84:12",
+  "Psa 85:1-87:7",
+  "Psa 88:1-89:52",
+  "Psa 90:1-91:16"
+],
+
+65: [
+  "Psa 92:1-94:23",
+  "Psa 95:1-97:12",
+  "Psa 98:1-101:8",
+  "Psa 102:1-103:22",
+  "Psa 104:1-105:45",
+  "Psa 106:1-48",
+  "Psa 107:1-43"
+],
+
+66: [
+  "Psa 108:1-109:31",
+  "Psa 110:1-112:10",
+  "Psa 113:1-115:18",
+  "Psa 116:1-118:29",
+  "Psa 119:1-32",
+  "Psa 119:33-72",
+  "Psa 119:73-120"
+],
+
+67: [
+  "Psa 119:121-176",
+  "Psa 120:1-124:8",
+  "Psa 125:1-128:6",
+  "Psa 129:1-132:18",
+  "Psa 133:1-135:21",
+  "Psa 136:1-138:8",
+  "Psa 139:1-140:13"
+],
+
+68: [
+  "Psa 141:1-144:15",
+  "Psa 145:1-147:20",
+  "Psa 148:1-150:6",
+  "Prov 1:1-33",
+  "Prov 2:1-3:35",
+  "Prov 4:1-5:23",
+  "Prov 6:1-35"
+],
+
+69: [
+  "Prov 7:1-8:36",
+  "Prov 9:1-10:32",
+  "Prov 11:1-12:28",
+  "Prov 13:1-14:35",
+  "Prov 15:1-33",
+  "Prov 16:1-33",
+  "Prov 17:1-28"
+],
+
+70: [
+  "Prov 18:1-24",
+  "Prov 19:1-20:30",
+  "Prov 21:1-22:29",
+  "Prov 23:1-35",
+  "Prov 24:1-25:28",
+  "Prov 26:1-27:27",
+  "Prov 28:1-29:27"
+],
+
+71: [
+  "Prov 30:1-33",
+  "Prov 31:1-31",
+  "Eccl 1:1-18",
+  "Eccl 2:1-3:22",
+  "Eccl 4:1-5:20",
+  "Eccl 6:1-7:29",
+  "Eccl 8:1-9:18"
+],
+
+72: [
+  "Eccl 10:1-11:10",
+  "Eccl 12:1-14",
+  "S.S 1:1-8",
+  "S.S 1:9-17",
+  "S.S 2:1-17",
+  "S.S 3:1-11",
+  "S.S 4:1-8"
+],
+
+73: [
+  "S.S 4:9-16",
+  "S.S 5:1-16",
+  "S.S 6:1-13",
+  "S.S 7:1-13",
+  "S.S 8:1-14",
+  "Isa 1:1-11",
+  "Isa 1:12-31"
+],
+
+74: [
+  "Isa 2:1-22",
+  "Isa 3:1-26",
+  "Isa 4:1-6",
+  "Isa 5:1-30",
+  "Isa 6:1-13",
+  "Isa 7:1-25",
+  "Isa 8:1-22"
+],
+
+75: [
+  "Isa 9:1-21",
+  "Isa 10:1-34",
+  "Isa 11:1-12:6",
+  "Isa 13:1-22",
+  "Isa 14:1-14",
+  "Isa 14:15-32",
+  "Isa 15:1-16:14"
+],
+
+76: [
+  "Isa 17:1-18:7",
+  "Isa 19:1-25",
+  "Isa 20:1-21:17",
+  "Isa 22:1-25",
+  "Isa 23:1-18",
+  "Isa 24:1-23",
+  "Isa 25:1-12"
+],
+
+77: [
+  "Isa 26:1-21",
+  "Isa 27:1-13",
+  "Isa 28:1-29",
+  "Isa 29:1-24",
+  "Isa 30:1-33",
+  "Isa 31:1-32:20",
+  "Isa 33:1-24"
+],
+
+78: [
+  "Isa 34:1-17",
+  "Isa 35:1-10",
+  "Isa 36:1-22",
+  "Isa 37:1-38",
+  "Isa 38:1-39:8",
+  "Isa 40:1-31",
+  "Isa 41:1-29"
+],
+
+79: [
+  "Isa 42:1-25",
+  "Isa 43:1-28",
+  "Isa 44:1-28",
+  "Isa 45:1-25",
+  "Isa 46:1-13",
+  "Isa 47:1-15",
+  "Isa 48:1-22"
+],
+
+80: [
+  "Isa 49:1-13",
+  "Isa 49:14-26",
+  "Isa 50:1-51:23",
+  "Isa 52:1-15",
+  "Isa 53:1-12",
+  "Isa 54:1-17",
+  "Isa 55:1-13"
+],
+
+81: [
+  "Isa 56:1-12",
+  "Isa 57:1-21",
+  "Isa 58:1-14",
+  "Isa 59:1-21",
+  "Isa 60:1-22",
+  "Isa 61:1-11",
+  "Isa 62:1-12"
+],
+
+82: [
+  "Isa 63:1-19",
+  "Isa 64:1-12",
+  "Isa 65:1-25",
+  "Isa 66:1-24",
+  "Jer 1:1-19",
+  "Jer 2:1-19",
+  "Jer 2:20-37"
+],
+
+83: [
+  "Jer 3:1-25",
+  "Jer 4:1-31",
+  "Jer 5:1-31",
+  "Jer 6:1-30",
+  "Jer 7:1-34",
+  "Jer 8:1-22",
+  "Jer 9:1-26"
+],
+
+84: [
+  "Jer 10:1-25",
+  "Jer 11:1-12:17",
+  "Jer 13:1-27",
+  "Jer 14:1-22",
+  "Jer 15:1-21",
+  "Jer 16:1-17:27",
+  "Jer 18:1-23"
+],
+
+85: [
+  "Jer 19:1-20:18",
+  "Jer 21:1-22:30",
+  "Jer 23:1-40",
+  "Jer 24:1-25:38",
+  "Jer 26:1-27:22",
+  "Jer 28:1-29:32",
+  "Jer 30:1-24"
+],
+
+86: [
+  "Jer 31:1-23",
+  "Jer 31:24-40",
+  "Jer 32:1-44",
+  "Jer 33:1-26",
+  "Jer 34:1-22",
+  "Jer 35:1-19",
+  "Jer 36:1-32"
+],
+
+87: [
+  "Jer 37:1-21",
+  "Jer 38:1-28",
+  "Jer 39:1-40:16",
+  "Jer 41:1-42:22",
+  "Jer 43:1-44:30",
+  "Jer 45:1-46:28",
+  "Jer 47:1-48:16"
+],
+
+88: [
+  "Jer 48:17-47",
+  "Jer 49:1-22",
+  "Jer 49:23-39",
+  "Jer 50:1-27",
+  "Jer 50:28-46",
+  "Jer 51:1-27",
+  "Jer 51:28-64"
+],
+
+89: [
+  "Jer 52:1-34",
+  "Lam 1:1-22",
+  "Lam 2:1-22",
+  "Lam 3:1-39",
+  "Lam 3:40-66",
+  "Lam 4:1-22",
+  "Lam 5:1-22"
+],
+
+90: [
+  "Ezek 1:1-14",
+  "Ezek 1:15-28",
+  "Ezek 2:1-3:27",
+  "Ezek 4:1-5:17",
+  "Ezek 6:1-7:27",
+  "Ezek 8:1-9:11",
+  "Ezek 10:1-11:25"
+],
+
+91: [
+  "Ezek 12:1-13:23",
+  "Ezek 14:1-15:8",
+  "Ezek 16:1-63",
+  "Ezek 17:1-18:32",
+  "Ezek 19:1-14",
+  "Ezek 20:1-49",
+  "Ezek 21:1-32"
+],
+
+92: [
+  "Ezek 22:1-31",
+  "Ezek 23:1-49",
+  "Ezek 24:1-27",
+  "Ezek 25:1-26:21",
+  "Ezek 27:1-36",
+  "Ezek 28:1-26",
+  "Ezek 29:1-30:26"
+],
+
+93: [
+  "Ezek 31:1-32:32",
+  "Ezek 33:1-33",
+  "Ezek 34:1-31",
+  "Ezek 35:1-36:21",
+  "Ezek 36:22-38",
+  "Ezek 37:1-28",
+  "Ezek 38:1-39:29"
+],
+
+94: [
+  "Ezek 40:1-27",
+  "Ezek 40:28-49",
+  "Ezek 41:1-26",
+  "Ezek 42:1-43:27",
+  "Ezek 44:1-31",
+  "Ezek 45:1-25",
+  "Ezek 46:1-24"
+],
+
+95: [
+  "Ezek 47:1-23",
+  "Ezek 48:1-35",
+  "Dan 1:1-21",
+  "Dan 2:1-30",
+  "Dan 2:31-49",
+  "Dan 3:1-30",
+  "Dan 4:1-37"
+],
+
+96: [
+  "Dan 5:1-31",
+  "Dan 6:1-28",
+  "Dan 7:1-12",
+  "Dan 7:13-28",
+  "Dan 8:1-27",
+  "Dan 9:1-27",
+  "Dan 10:1-21"
+],
+
+97: [
+  "Dan 11:1-22",
+  "Dan 11:23-45",
+  "Dan 12:1-13",
+  "Hosea 1:1-11",
+  "Hosea 2:1-23",
+  "Hosea 3:1-4:19",
+  "Hosea 5:1-15"
+],
+
+98: [
+  "Hosea 6:1-11",
+  "Hosea 7:1-16",
+  "Hosea 8:1-14",
+  "Hosea 9:1-17",
+  "Hosea 10:1-15",
+  "Hosea 11:1-12",
+  "Hosea 12:1-14"
+],
+
+99: [
+  "Hosea 13:1-14:9",
+  "Joel 1:1-20",
+  "Joel 2:1-16",
+  "Joel 2:17-32",
+  "Joel 3:1-21",
+  "Amos 1:1-15",
+  "Amos 2:1-16"
+],
+
+100: [
+  "Amos 3:1-15",
+  "Amos 4:1-5:27",
+  "Amos 6:1-7:17",
+  "Amos 8:1-9:15",
+  "Obad 1:1-21",
+  "Jonah 1:1-17",
+  "Jonah 2:1-4:11"
+],
+
+101: [
+  "Micah 1:1-16",
+  "Micah 2:1-3:12",
+  "Micah 4:1-5:15",
+  "Micah 6:1-7:20",
+  "Nahum 1:1-15",
+  "Nahum 2:1-3:19",
+  "Hab 1:1-17"
+],
+
+102: [
+  "Hab 2:1-20",
+  "Hab 3:1-19",
+  "Zeph 1:1-18",
+  "Zeph 2:1-15",
+  "Zeph 3:1-20",
+  "Hag 1:1-15",
+  "Hag 2:1-23"
+],
+
+103: [
+  "Zech 1:1-21",
+  "Zech 2:1-13",
+  "Zech 3:1-10",
+  "Zech 4:1-14",
+  "Zech 5:1-6:15",
+  "Zech 7:1-8:23",
+  "Zech 9:1-17"
+],
+
+104: [
+  "Zech 10:1-11:17",
+  "Zech 12:1-13:9",
+  "Zech 14:1-21",
+  "Mal 1:1-14",
+  "Mal 2:1-17",
+  "Mal 3:1-18",
+  "Mal 4:1-6"
+],
+
+   };
+
+    const ntRefs = {
+      // NT Weeks 1–26 (from your first NT table)
+      1: ["Matt 1:1–2:8", "1:3–7", "1:8–17", "1:18–25", "2:1–23", "3:1–6", "3:7–17"],
+      2: ["4:1–11", "4:12–25", "5:1–4", "5:5–12", "5:13–20", "5:21–26", "5:27–48"],
+      3: ["6:1–8", "6:9–19", "6:19–34", "7:1–12", "7:13–29", "8:1–4", "8:1–22"],
+      4: ["8:23–34", "9:1–13", "9:14–17", "9:18–34", "9:35–10:5", "10:6–25", "10:26–42"],
+      5: ["11:1–15", "11:16–30", "12:1–14", "12:15–32", "12:33–42", "12:43–13:12", "13:13–32"],
+      // ...continue NT 6–26 from that table
+      // ...then NT 27–52, 53–78, 79–104 from the other NT tables
+    };
+
+    function formatDate(d) {
+      const day = d.getDate();
+      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      return `${day} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+    }
+
+    function createWeeks(container, prefix, refs) {
+      for (let w = 1; w <= NUM_WEEKS; w++) {
+        const weekDiv = document.createElement('div');
+        weekDiv.className = 'week';
+        weekDiv.id = `${prefix}-week-${w}`;
+
+        const header = document.createElement('div');
+        header.className = 'week-header';
+
+        const title = document.createElement('div');
+        title.className = 'week-title';
+        title.textContent = `Week ${w}`;
+
+        const start = new Date(START_DATE.getTime() + (w - 1) * 7 * 86400000);
+        const end = new Date(start.getTime() + 6 * 86400000);
+
+        const dates = document.createElement('div');
+        dates.className = 'week-dates';
+        dates.textContent = `${formatDate(start)} – ${formatDate(end)}`;
+
+        header.appendChild(title);
+        header.appendChild(dates);
+        weekDiv.appendChild(header);
+
+        dayNames.forEach((name, idx) => {
+          const dayDiv = document.createElement('div');
+          dayDiv.className = 'day';
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          const key = `${prefix}-w${w}-d${idx}`;
+          checkbox.id = key;
+
+          if (w <= 9) {
+            checkbox.checked = true;
+            localStorage.setItem(key, '1');
+          } else {
+            const saved = localStorage.getItem(key);
+            if (saved === '1') checkbox.checked = true;
+          }
+
+          checkbox.addEventListener('change', () => {
+            if (checkbox.checked) localStorage.setItem(key, '1');
+            else localStorage.removeItem(key);
+          });
+
+          const label = document.createElement('label');
+          label.htmlFor = key;
+
+          const ref = refs[w] && refs[w][idx] ? refs[w][idx] : "";
+          label.textContent = ref ? `${name} — ${ref}` : name;
+
+          dayDiv.appendChild(checkbox);
+          dayDiv.appendChild(label);
+          weekDiv.appendChild(dayDiv);
+        });
+
+        container.appendChild(weekDiv);
+      }
+    }
+
+    createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
+    createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+
+    document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const week = parseInt(btn.getAttribute('data-jump'), 10);
+        const target = document.getElementById(`ot-week-${week}`);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+</body>
+</html>
