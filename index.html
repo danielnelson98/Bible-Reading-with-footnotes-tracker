@@ -171,7 +171,7 @@
   display: none;
   z-index: 999;
 ">
-  Today
+  This Week
 </button>
 
 
@@ -2336,11 +2336,20 @@ const currentWeek = getCurrentWeekNumber();
   if (el) el.classList.add('current-week');
 });
 
-// scroll to OT current week on load
-const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
-if (currentOtWeekEl) {
-  currentOtWeekEl.scrollIntoView({ behavior: 'instant', block: 'start' });
-}
+// scroll to current week on load (with slight delay for mobile)
+setTimeout(() => {
+  const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
+  if (currentOtWeekEl) {
+    currentOtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+  }
+
+  // also scroll NT (desktop side-by-side)
+  const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
+  if (currentNtWeekEl) {
+    currentNtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+  }
+}, 50);
+
 
 
     document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
@@ -2406,7 +2415,7 @@ jumpTodayBtn.addEventListener("click", scrollToCurrentWeek);
 
 // Show button only when user scrolls away
 window.addEventListener("scroll", () => {
-  if (window.scrollY > 200) {
+  if (window.scrollY > 80) {
     jumpTodayBtn.style.display = "block";
   } else {
     jumpTodayBtn.style.display = "none";
