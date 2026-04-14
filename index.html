@@ -141,11 +141,11 @@
 
   <div class="container">
 
-    <div class="column">
+   <div class="column" id="ot-column">
       <h2>Old Testament</h2>
       <div class="weeks" id="ot-weeks"></div>
     </div>
-    <div class="column">
+    <div class="column" id="nt-column">
       <h2>New Testament</h2>
       <div class="weeks" id="nt-weeks"></div>
     </div>
@@ -2357,11 +2357,11 @@ document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
   btn.addEventListener('click', () => {
     const week = parseInt(btn.getAttribute('data-jump'), 10);
 
-    const otPanel = document.getElementById("ot-panel");
-    const ntPanel = document.getElementById("nt-panel");
+    const otCol = document.getElementById("ot-column");
+    const ntCol = document.getElementById("nt-column");
 
-    const otVisible = window.getComputedStyle(otPanel).display !== "none";
-    const ntVisible = window.getComputedStyle(ntPanel).display !== "none";
+    const otVisible = otCol.classList.contains("active") || window.getComputedStyle(otCol).display !== "none";
+    const ntVisible = ntCol.classList.contains("active") || window.getComputedStyle(ntCol).display !== "none";
 
     const targetId = ntVisible ? `nt-week-${week}` : `ot-week-${week}`;
     const target = document.getElementById(targetId);
@@ -2417,11 +2417,11 @@ showOT();
 const jumpTodayBtn = document.getElementById("jump-today");
 
 function scrollToCurrentWeek() {
-  const otPanel = document.getElementById("ot-panel");
-  const ntPanel = document.getElementById("nt-panel");
+  const otCol = document.getElementById("ot-column");
+  const ntCol = document.getElementById("nt-column");
 
-  const otVisible = window.getComputedStyle(otPanel).display !== "none";
-  const ntVisible = window.getComputedStyle(ntPanel).display !== "none";
+  const otVisible = otCol.classList.contains("active") || window.getComputedStyle(otCol).display !== "none";
+  const ntVisible = ntCol.classList.contains("active") || window.getComputedStyle(ntCol).display !== "none";
 
   const targetId = ntVisible ? `nt-week-${currentWeek}` : `ot-week-${currentWeek}`;
   const el = document.getElementById(targetId);
