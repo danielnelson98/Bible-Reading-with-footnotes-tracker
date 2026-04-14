@@ -2356,12 +2356,24 @@ setTimeout(() => {
 document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
   btn.addEventListener('click', () => {
     const week = parseInt(btn.getAttribute('data-jump'), 10);
+    const desktopMode = window.matchMedia("(orientation: landscape)").matches;
 
+    if (desktopMode) {
+      // Desktop: scroll BOTH OT and NT
+      const otEl = document.getElementById(`ot-week-${week}`);
+      const ntEl = document.getElementById(`nt-week-${week}`);
+
+      if (otEl) otEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (ntEl) ntEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    // Mobile: scroll ONLY the active tab
     const otCol = document.getElementById("ot-column");
     const ntCol = document.getElementById("nt-column");
 
-    const otVisible = otCol.classList.contains("active") || window.getComputedStyle(otCol).display !== "none";
-    const ntVisible = ntCol.classList.contains("active") || window.getComputedStyle(ntCol).display !== "none";
+    const otVisible = otCol.classList.contains("active");
+    const ntVisible = ntCol.classList.contains("active");
 
     const targetId = ntVisible ? `nt-week-${week}` : `ot-week-${week}`;
     const target = document.getElementById(targetId);
@@ -2417,11 +2429,24 @@ showOT();
 const jumpTodayBtn = document.getElementById("jump-today");
 
 function scrollToCurrentWeek() {
+  const desktopMode = window.matchMedia("(orientation: landscape)").matches;
+
+  if (desktopMode) {
+    // Desktop: scroll BOTH OT and NT
+    const otEl = document.getElementById(`ot-week-${currentWeek}`);
+    const ntEl = document.getElementById(`nt-week-${currentWeek}`);
+
+    if (otEl) otEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (ntEl) ntEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
+  // Mobile: scroll ONLY the active tab
   const otCol = document.getElementById("ot-column");
   const ntCol = document.getElementById("nt-column");
 
-  const otVisible = otCol.classList.contains("active") || window.getComputedStyle(otCol).display !== "none";
-  const ntVisible = ntCol.classList.contains("active") || window.getComputedStyle(ntCol).display !== "none";
+  const otVisible = otCol.classList.contains("active");
+  const ntVisible = ntCol.classList.contains("active");
 
   const targetId = ntVisible ? `nt-week-${currentWeek}` : `ot-week-${currentWeek}`;
   const el = document.getElementById(targetId);
