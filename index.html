@@ -174,12 +174,34 @@
   This Week
 </button>
 
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
-  <script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAYiWx2sv2-ub3-qpwQ9O_YmGp611juKwA",
+    authDomain: "bible-tracker-a0c2f.firebaseapp.com",
+    projectId: "bible-tracker-a0c2f",
+    storageBucket: "bible-tracker-a0c2f.firebasestorage.app",
+    messagingSenderId: "624743248131",
+    appId: "1:624743248131:web:9ec70b54b16f46711f3936"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
 
     const NUM_WEEKS = 104;
     const START_DATE = new Date(2026, 0, 4); // 4 Jan 2026 (Lord's Day)
     const dayNames = ["Lord's Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const customWeekDates = {
+  11: ["12 Apr 2026", "18 Apr 2026"],
+  12: ["19 Apr 2026", "25 Apr 2026"],
+  13: ["26 Apr 2026", "2 May 2026"],
+  // add more if needed
+};
 
 function getCurrentWeekNumber() {
   const today = new Date();
@@ -2258,99 +2280,124 @@ function getCurrentWeekNumber() {
 ],
     };
 
+async function loadProgressFromFirebase() {
+  const doc = await db.collection("progress").doc("user1").get();
+  return doc.exists ? doc.data() : {};
+}
+
+function saveProgressToFirebase(key, value) {
+  db.collection("progress").doc("user1").set(
+    { [key]: value },
+    { merge: true }
+  );
+}
+
+
     function formatDate(d) {
       const day = d.getDate();
       const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       return `${day} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
     }
+    
+function createWeeks(container, prefix, refs) {
+  for (let w = 1; w <= NUM_WEEKS; w++) {
+    const weekDiv = document.createElement('div');
+    weekDiv.className = 'week';
+    weekDiv.id = `${prefix}-week-${w}`;
 
-    function createWeeks(container, prefix, refs) {
-      for (let w = 1; w <= NUM_WEEKS; w++) {
-        const weekDiv = document.createElement('div');
-        weekDiv.className = 'week';
-        weekDiv.id = `${prefix}-week-${w}`;
+    const header = document.createElement('div');
+    header.className = 'week-header';
 
-        const header = document.createElement('div');
-        header.className = 'week-header';
+    const title = document.createElement('div');
+    title.className = 'week-title';
+    title.textContent = `Week ${w}`;
 
-        const title = document.createElement('div');
-        title.className = 'week-title';
-        title.textContent = `Week ${w}`;
+    const dates = document.createElement('div');
+    dates.className = 'week-dates';
 
-        const start = new Date(START_DATE.getTime() + (w - 1) * 7 * 86400000);
-        const end = new Date(start.getTime() + 6 * 86400000);
+    // CUSTOM DATE LOGIC
+    let start, end;
 
-        const dates = document.createElement('div');
-        dates.className = 'week-dates';
-        dates.textContent = `${formatDate(start)} – ${formatDate(end)}`;
+    if (customWeekDates[w]) {
+      // Use manually overridden dates
+      [start, end] = customWeekDates[w];
+    } else {
+      // Use automatic date calculation
+      const weekStart = new Date(START_DATE.getTime() + (w - 1) * 7 * 86400000);
+      const weekEnd = new Date(weekStart.getTime() + 6 * 86400000);
 
-        header.appendChild(title);
-        header.appendChild(dates);
-        weekDiv.appendChild(header);
-
-        dayNames.forEach((name, idx) => {
-          const dayDiv = document.createElement('div');
-          dayDiv.className = 'day';
-
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          const key = `${prefix}-w${w}-d${idx}`;
-          checkbox.id = key;
-
-          if (w <= 9) {
-            checkbox.checked = true;
-            localStorage.setItem(key, '1');
-          } else {
-            const saved = localStorage.getItem(key);
-            if (saved === '1') checkbox.checked = true;
-          }
-
-          checkbox.addEventListener('change', () => {
-            if (checkbox.checked) localStorage.setItem(key, '1');
-            else localStorage.removeItem(key);
-          });
-
-          const label = document.createElement('label');
-          label.htmlFor = key;
-
-          const ref = refs[w] && refs[w][idx] ? refs[w][idx] : "";
-          label.textContent = ref ? `${name} — ${ref}` : name;
-
-          dayDiv.appendChild(checkbox);
-          dayDiv.appendChild(label);
-          weekDiv.appendChild(dayDiv);
-        });
-
-        container.appendChild(weekDiv);
-      }
+      start = formatDate(weekStart);
+      end = formatDate(weekEnd);
     }
 
-    createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
-    createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+    dates.textContent = `${start} – ${end}`;
 
-const OVERRIDE_WEEK = 11;  // set to null to disable
+    header.appendChild(title);
+    header.appendChild(dates);
+    weekDiv.appendChild(header);
+
+    // Days + checkboxes
+    dayNames.forEach((name, idx) => {
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      const key = `${prefix}-w${w}-d${idx}`;
+      checkbox.id = key;
+
+      if (firebaseProgress[key] === 1) {
+      checkbox.checked = true;
+      }
+
+      checkbox.addEventListener('change', () => {
+       saveProgressToFirebase(key, checkbox.checked ? 1 : 0);
+
+      });
+
+      const label = document.createElement('label');
+      label.htmlFor = key;
+
+      const ref = refs[w] && refs[w][idx] ? refs[w][idx] : "";
+      label.textContent = ref ? `${name} — ${ref}` : name;
+
+      dayDiv.appendChild(checkbox);
+      dayDiv.appendChild(label);
+      weekDiv.appendChild(dayDiv);
+    });
+
+    container.appendChild(weekDiv);
+  }
+}
+
+const OVERRIDE_WEEK = 12;   // set to null to disable
 
 const currentWeek = OVERRIDE_WEEK ?? getCurrentWeekNumber();
 
-// highlight OT + NT current week
-["ot", "nt"].forEach(prefix => {
-  const el = document.getElementById(`${prefix}-week-${currentWeek}`);
-  if (el) el.classList.add('current-week');
+loadProgressFromFirebase().then(progress => {
+  window.firebaseProgress = progress;
+
+  createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
+  createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+
+  // NOW highlight + scroll
+  ["ot", "nt"].forEach(prefix => {
+    const el = document.getElementById(`${prefix}-week-${currentWeek}`);
+    if (el) el.classList.add('current-week');
+  });
+
+  setTimeout(() => {
+    const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
+    if (currentOtWeekEl) {
+      currentOtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+
+    const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
+    if (currentNtWeekEl) {
+      currentNtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+    }
+  }, 50);
 });
-
-// scroll to current week on load (with slight delay for mobile)
-setTimeout(() => {
-  const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
-  if (currentOtWeekEl) {
-    currentOtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
-  }
-
-  // also scroll NT (desktop side-by-side)
-  const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
-  if (currentNtWeekEl) {
-    currentNtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
-  }
-}, 50);
 
 
 document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
