@@ -191,16 +191,15 @@
   const db = firebase.firestore();
 </script>
 
-
-    const NUM_WEEKS = 104;
-    const START_DATE = new Date(2026, 0, 4); // 4 Jan 2026 (Lord's Day)
-    const dayNames = ["Lord's Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+<script>
+  const NUM_WEEKS = 104;
+  const START_DATE = new Date(2026, 0, 4);
+  const dayNames = ["Lord's Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const customWeekDates = {
   11: ["12 Apr 2026", "18 Apr 2026"],
   12: ["19 Apr 2026", "25 Apr 2026"],
   13: ["26 Apr 2026", "2 May 2026"],
-  // add more if needed
 };
 
 function getCurrentWeekNumber() {
