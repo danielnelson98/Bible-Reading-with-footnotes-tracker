@@ -196,6 +196,7 @@
   const START_DATE = new Date(2026, 0, 4);
   const dayNames = ["Lord's Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+
 const customWeekDates = {
   11: ["12 Apr 2026", "18 Apr 2026"],
   12: ["19 Apr 2026", "25 Apr 2026"],
@@ -2306,6 +2307,15 @@ function saveProgressToFirebase(key, value) {
       const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       return `${day} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
     }
+
+function scrollToWeek(prefix, week) {
+  const container = document.querySelector(`#${prefix}-weeks`);
+  const target = document.getElementById(`${prefix}-week-${week}`)
+
+  if (container && target) {
+    container.scrollTop = target.offsetTop;
+  }
+}
     
 function createWeeks(container, prefix, refs) {
   for (let w = 1; w <= NUM_WEEKS; w++) {
@@ -2354,7 +2364,7 @@ function createWeeks(container, prefix, refs) {
       const key = `${prefix}-w${w}-d${idx}`;
       checkbox.id = key;
 
-      if (window.firebaseProgress?.[key] === 1) {
+      if (window.firebaseProgress?.[key] == 1) {
       checkbox.checked = true;
       }
 
@@ -2382,13 +2392,14 @@ const OVERRIDE_WEEK = 12;   // set to null to disable
 
 const currentWeek = OVERRIDE_WEEK ?? getCurrentWeekNumber();
 
-loadProgressFromFirebase().then(progress => {
+loadProgressFromFirebase()
+.then(progress => {
   window.firebaseProgress = progress;
 
   createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
   createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
 
-  // NOW highlight + scroll
+  // Highlight current week
   ["ot", "nt"].forEach(prefix => {
     const el = document.getElementById(`${prefix}-week-${currentWeek}`);
     if (el) el.classList.add('current-week');
@@ -2397,16 +2408,31 @@ loadProgressFromFirebase().then(progress => {
   setTimeout(() => {
     const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
     if (currentOtWeekEl) {
-      currentOtWeekEl.scrollIntoView({ behavior: "Auto", block: "start" });
+      scrollToWeek("ot", currentWeek);
+        behavior: "auto",
+        block: "start"
+      });
     }
 
     const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
     if (currentNtWeekEl) {
-      currentNtWeekEl.scrollIntoView({ behavior: "Auto", block: "start" });
+      scrollToWeek("nt", currentWeek);
+        behavior: "auto",
+        block: "start"
+      });
     }
   }, 50);
-});
 
+})
+.catch(err => {
+  console.error(err);
+
+  // Fallback if Firebase fails
+  window.firebaseProgress = {};
+
+  createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
+  createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+});
 
 document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -2418,7 +2444,7 @@ document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
       const otEl = document.getElementById(`ot-week-${week}`);
       const ntEl = document.getElementById(`nt-week-${week}`);
 
-      if (otEl) otEl.scrollIntoView({ behavior: "smooth", block: "start" });
+     scrollToWeek("ot", week);
       if (ntEl) ntEl.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
