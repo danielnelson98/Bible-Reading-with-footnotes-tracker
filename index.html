@@ -174,8 +174,8 @@
   This Week
 </button>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <script>
   const firebaseConfig = {
@@ -2354,7 +2354,7 @@ function createWeeks(container, prefix, refs) {
       const key = `${prefix}-w${w}-d${idx}`;
       checkbox.id = key;
 
-      if (firebaseProgress[key] === 1) {
+      if (window.firebaseProgress?.[key] === 1) {
       checkbox.checked = true;
       }
 
@@ -2397,12 +2397,12 @@ loadProgressFromFirebase().then(progress => {
   setTimeout(() => {
     const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
     if (currentOtWeekEl) {
-      currentOtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+      currentOtWeekEl.scrollIntoView({ behavior: "Auto", block: "start" });
     }
 
     const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
     if (currentNtWeekEl) {
-      currentNtWeekEl.scrollIntoView({ behavior: "instant", block: "start" });
+      currentNtWeekEl.scrollIntoView({ behavior: "Auto", block: "start" });
     }
   }, 50);
 });
