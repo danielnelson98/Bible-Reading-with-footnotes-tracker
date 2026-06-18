@@ -112,12 +112,44 @@
   box-shadow: 0 0 8px rgba(255, 152, 0, 0.6);
 }
 
+.auth-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #e8eaf6;
+  font-size: 0.85rem;
+}
+.auth-bar button {
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: #3949ab;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.auth-bar button:hover { background: #303f9f; }
+.auth-bar .user-name {
+  font-weight: 500;
+  color: #283593;
+}
+
   </style>
 </head>
 <body>
   <header>
     <h1>Bible Reading Tracker</h1>
   </header>
+
+  <div class="auth-bar" id="auth-section" style="display:none">
+    <span class="user-name" id="user-display"></span>
+    <button id="sign-out-btn" style="display:none">Sign Out</button>
+  </div>
+  <div class="auth-bar" id="sign-in-bar">
+    <button id="sign-in-btn">Sign in with Google</button>
+  </div>
 
   <div class="nav">
     <span>Jump to week:</span>
@@ -176,15 +208,16 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <script>
   const firebaseConfig = {
-    apiKey: "AIzaSyAYiWx2sv2-ub3-qpwQ9O_YmGp611juKwA",
-    authDomain: "bible-tracker-a0c2f.firebaseapp.com",
-    projectId: "bible-tracker-a0c2f",
-    storageBucket: "bible-tracker-a0c2f.firebasestorage.app",
-    messagingSenderId: "624743248131",
-    appId: "1:624743248131:web:9ec70b54b16f46711f3936"
+    apiKey: "AIzaSyDuSbp2dMWfgYTptpZS2Z6E0dmkuP-CmpA",
+    authDomain: "bible-16011.firebaseapp.com",
+    projectId: "bible-16011",
+    storageBucket: "bible-16011.firebasestorage.app",
+    messagingSenderId: "39555582090",
+    appId: "1:39555582090:web:218c5d835af830a7db0573"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -2289,16 +2322,73 @@ const otRefs = {
 ],
     };
 
-async function loadProgressFromFirebase() {
-  const doc = await db.collection("progress").doc("user1").get();
-  return doc.exists ? doc.data() : {};
+let currentUser = null;
+let progressUnsubscribe = null;
+let updatingFromSnapshot = false;
+
+function initAuth() {
+  firebase.auth().onAuthStateChanged(user => {
+    currentUser = user;
+    const authSection = document.getElementById('auth-section');
+    const signInBtn = document.getElementById('sign-in-btn');
+    const signOutBtn = document.getElementById('sign-out-btn');
+    const userDisplay = document.getElementById('user-display');
+
+    const signInBar = document.getElementById('sign-in-bar');
+
+    if (user) {
+      userDisplay.textContent = user.displayName || user.email;
+      signInBar.style.display = 'none';
+      signOutBtn.style.display = 'inline-block';
+      authSection.style.display = 'flex';
+
+      if (progressUnsubscribe) progressUnsubscribe();
+
+      progressUnsubscribe = db.collection("progress").doc(user.uid)
+        .onSnapshot(doc => {
+          window.firebaseProgress = doc.exists ? doc.data() : {};
+          updatingFromSnapshot = true;
+          Object.keys(window.firebaseProgress).forEach(key => {
+            const cb = document.getElementById(key);
+            if (cb) cb.checked = window.firebaseProgress[key] == 1;
+          });
+          updatingFromSnapshot = false;
+        });
+    } else {
+      userDisplay.textContent = '';
+      signInBar.style.display = 'flex';
+      signOutBtn.style.display = 'none';
+      authSection.style.display = 'none';
+
+      if (progressUnsubscribe) {
+        progressUnsubscribe();
+        progressUnsubscribe = null;
+      }
+
+      updatingFromSnapshot = true;
+      window.firebaseProgress = {};
+      document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+      updatingFromSnapshot = false;
+    }
+  });
+}
+
+function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider);
+}
+
+function signOut() {
+  firebase.auth().signOut();
 }
 
 function saveProgressToFirebase(key, value) {
-  db.collection("progress").doc("user1").set(
-    { [key]: value },
-    { merge: true }
-  );
+  if (currentUser) {
+    db.collection("progress").doc(currentUser.uid).set(
+      { [key]: value },
+      { merge: true }
+    );
+  }
 }
 
 
@@ -2369,8 +2459,8 @@ function createWeeks(container, prefix, refs) {
       }
 
       checkbox.addEventListener('change', () => {
-       saveProgressToFirebase(key, checkbox.checked ? 1 : 0);
-
+        if (updatingFromSnapshot) return;
+        saveProgressToFirebase(key, checkbox.checked ? 1 : 0);
       });
 
       const label = document.createElement('label');
@@ -2392,47 +2482,25 @@ const OVERRIDE_WEEK = 12;   // set to null to disable
 
 const currentWeek = OVERRIDE_WEEK ?? getCurrentWeekNumber();
 
-loadProgressFromFirebase()
-.then(progress => {
-  window.firebaseProgress = progress;
+window.firebaseProgress = {};
 
-  createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
-  createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
+createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
 
-  // Highlight current week
-  ["ot", "nt"].forEach(prefix => {
-    const el = document.getElementById(`${prefix}-week-${currentWeek}`);
-    if (el) el.classList.add('current-week');
-  });
-
-  setTimeout(() => {
-    const currentOtWeekEl = document.getElementById(`ot-week-${currentWeek}`);
-    if (currentOtWeekEl) {
-      scrollToWeek("ot", currentWeek);
-        behavior: "auto",
-        block: "start"
-      });
-    }
-
-    const currentNtWeekEl = document.getElementById(`nt-week-${currentWeek}`);
-    if (currentNtWeekEl) {
-      scrollToWeek("nt", currentWeek);
-        behavior: "auto",
-        block: "start"
-      });
-    }
-  }, 50);
-
-})
-.catch(err => {
-  console.error(err);
-
-  // Fallback if Firebase fails
-  window.firebaseProgress = {};
-
-  createWeeks(document.getElementById('ot-weeks'), 'ot', otRefs);
-  createWeeks(document.getElementById('nt-weeks'), 'nt', ntRefs);
+["ot", "nt"].forEach(prefix => {
+  const el = document.getElementById(`${prefix}-week-${currentWeek}`);
+  if (el) el.classList.add('current-week');
 });
+
+setTimeout(() => {
+  scrollToWeek("ot", currentWeek);
+  scrollToWeek("nt", currentWeek);
+}, 50);
+
+document.getElementById('sign-in-btn').addEventListener('click', signIn);
+document.getElementById('sign-out-btn').addEventListener('click', signOut);
+
+initAuth();
 
 document.querySelectorAll('.nav button[data-jump]').forEach(btn => {
   btn.addEventListener('click', () => {
